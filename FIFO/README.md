@@ -16,9 +16,13 @@ option1: engine_name solver_name  #we mainly use smtbmc engige which support all
 option2: engine_name solver_name<br>
 
 [script]<br>
-hostA: read -sv hostA.v<br>
+hostA: read -sv hostA.v   #default for read -sv when Yosys is built with Verific support<br>
 deviceX: read -sv deviceX.v<br>
 
 [files]<br>
 hostA.v<br>
 deviceX.v<br>
+
+**For help use below commands**<br>
+yosys<br>
+help<br>
