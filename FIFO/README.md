@@ -15,7 +15,7 @@ option2: mode live<br>
 option1: engine_name solver_name  #we mainly use smtbmc engige which support all solvers with bmc,prove and cover modes <br>
 option2: engine_name solver_name<br>
 
-[script]
+[script]<br>
 hostA: read -sv hostA.v<br>
 deviceX: read -sv deviceX.v<br>
 
