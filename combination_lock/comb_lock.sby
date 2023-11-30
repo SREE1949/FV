@@ -1,0 +1,23 @@
+[tasks]
+basic bmc
+
+basic cover :default
+
+[options]
+cover:
+mode cover
+--
+
+bmc:
+mode bmc
+--
+
+[engines]
+smtbmc boolector
+
+[script]
+read -formal comb_lock.sv
+prep -top combination_lock
+
+[files]
+comb_lock.sv
