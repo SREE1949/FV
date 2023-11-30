@@ -75,6 +75,20 @@ module decoder (
     end
 endmodule
 
+module combination_checker (
+    input bit clk, rst, override,
+    input bit [63:0] combo,
+    output bit open
+);
+    always @(posedge clk or posedge rst) begin
+        if (rst) open <= 0;
+        else open <= ((combo==INTERNAL_COMBO)||override);
+    end
+
+endmodule
+
+
+
 module combination_lock (
     input bit [9:0] digits [3:0],
     input bit override,
