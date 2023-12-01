@@ -60,9 +60,10 @@ module decoder (
     // subfield gets its own 20-bit slot.
    
     always@* begin
-      combo[0:9] <= digits_save[0];
-      combo[10:19] <= digits_save[1];
-      combo[20:29] <= digits_save[2];
+      //combo[0:9] <= digits_save[0];
+      //combo[10:19] <= digits_save[1];
+      //combo[20:29] <= digits_save[2];
+      combo <= {digits_save[2],digits_save[1],digits_save[0]};
     end
 endmodule
 
@@ -80,14 +81,14 @@ endmodule
 
 
 module combination_lock (
-    input [9:0] digit0,digit1,digit2,digit3, 
+    input [9:0] digit, 
     input  override,
     input  clk, rst,
     output reg open
     );
 
     bit [29:0] combo;
-    decoder d1(clk, rst,digit0,digit1,digit2,digit3, combo);
+    decoder d1(clk, rst,digit, combo);
     combination_checker cc(clk, rst, override, combo, open);
 
     // Properties
@@ -131,6 +132,3 @@ module combination_lock (
 endmodule 
 
 
-
-
-  
