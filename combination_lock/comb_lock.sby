@@ -1,14 +1,13 @@
 [tasks]
 basic bmc
-
-basic cover :default
+basic cover : default
 
 [options]
 cover:
 mode cover
 --
 
-bmc:
+bmc: 
 mode bmc
 --
 
@@ -16,8 +15,10 @@ mode bmc
 smtbmc boolector
 
 [script]
-read -formal comb_lock.sv
+
+read -sv  comb_lock.sv
 prep -top combination_lock
 
 [files]
 comb_lock.sv
+~                
