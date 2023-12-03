@@ -1,12 +1,3 @@
-//
-// Combination Lock demo
-// Created to demo FPV basics, not claiming to be a good RTL design!
-// For the purpose of illustrating the power of FPV, we made this a bit
-// convoluted so you can't easily read the correct combo value by looking
-// at the code.
-//
-
-// Define consts for one-asserted digit values
 parameter bit [9:0]  C0 = 10'b1;
 parameter bit [9:0]  C1 = 10'b10;
 parameter bit [9:0]  C2 = 10'b100;
@@ -21,6 +12,7 @@ parameter bit [9:0]  C9 = 10'b1000000000;
 
 
 parameter bit [63:0] INTERNAL_COMBO = 64'h000aaa0000000aaa;
+/*
 `ifndef PAST_SECOND_DEBUG_STAGE
 parameter bit [9:0]  COMBO_FIRST_PART [3:0]  = '{C0,C1,C2,C3};
 parameter bit [9:0]  COMBO_SECOND_PART [3:0] = '{C0,C1,C2,C3};
@@ -31,18 +23,19 @@ parameter bit [9:0]  COMBO_FIRST_PART [3:0]  = '{C2,C7,C3,C3};
 parameter bit [9:0]  COMBO_SECOND_PART [3:0] = '{C0,C0,C0,C3};
 parameter bit [9:0]  COMBO_THIRD_PART [3:0]  = '{C2,C7,C3,C3};
 `else
+	*/
 parameter bit [9:0]  COMBO_FIRST_PART [3:0]  = '{C2,C7,C3,C0};
 parameter bit [9:0]  COMBO_SECOND_PART [3:0] = '{C0,C0,C0,C0};
 parameter bit [9:0]  COMBO_THIRD_PART [3:0]  = '{C2,C7,C3,C0};
-`endif
-`endif
+//`endif
+//`endif
 
 
-`ifndef PAST_THIRD_DEBUG_STAGE
-parameter bit [13:0] ONE = 14'd0;
-`else
+//`ifndef PAST_THIRD_DEBUG_STAGE
+//parameter bit [13:0] ONE = 14'd0;
+//`else
 parameter bit [13:0] ONE = 14'd1;
-`endif
+//`endif
 
 module decoder (
     input bit clk, rst,
@@ -65,11 +58,11 @@ module decoder (
 
     // Convert to our binary combo.  To simplify, each 4-digit
     // subfield gets its own 20-bit slot.
-    int i,j,k;
+    int i,j,k,cur;
     always_comb begin
         combo = 0;
         for (i=0;i<3;i++) begin
-            int cur = 0;
+            cur = 0;
             for (j=0;j<4;j++) begin
                 int digit_val = (j==0) ? ONE : 
                                 (j==1) ? 14'd10 :
@@ -87,7 +80,7 @@ endmodule
 module combination_checker (
     input bit clk, rst, override,
     input bit [63:0] combo,
-    output bit open
+    output bit open=0
 );
     always @(posedge clk or posedge rst) begin
         if (rst) open <= 0;
@@ -104,16 +97,24 @@ module combination_lock (
     output bit open
     );
 
-    bit [63:0] combo;
+    bit [63:0] combo=0;
     decoder d1(clk, rst, digits, combo);
     combination_checker cc(clk, rst, override, combo, open);
 
+
+
     // Properties
+
+`ifdef VERIFIC
+
     default clocking @(posedge clk); endclocking
     default disable iff (rst);
+
+   
     Page93_c1: cover property (open == 0);
     Page93_c2: cover property (open == 1);
 
+    
     genvar i,j;
     generate for (i=0; i<3; i++) begin
         for (j=0; j<9; j++) begin
@@ -121,7 +122,9 @@ module combination_lock (
         end
     end
     endgenerate
+    
 
+    //genvar i;
     generate for (i = 0; i<4; i++) begin
         Page94_a1: assume property ($onehot(digits[i]));
     end
@@ -139,10 +142,11 @@ module combination_lock (
     Page95_open_bad0:  assert property (open |-> $past(digits==COMBO_THIRD_PART,1));
 
     // Assumption added after first stage of debug
-    `ifdef PAST_FIRST_DEBUG_STAGE
-    Page99_fix1:  assume property (override == 0);
-    `endif
+   // `ifdef PAST_FIRST_DEBUG_STAGE
+       Page99_fix1:  assume property (override == 0);
+   // `endif
 
+`endif
     
 
 endmodule 
