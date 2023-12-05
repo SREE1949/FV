@@ -1,0 +1,24 @@
+[tasks]
+basic bmc
+basic cover : default
+
+[options]
+cover:
+mode cover
+--
+
+bmc:
+mode bmc
+--
+
+[engines]
+smtbmc boolector
+
+[script]
+
+read -sv  mealy.sv
+prep -top mealy_seq
+
+[files]
+mealy.sv
+~                        
