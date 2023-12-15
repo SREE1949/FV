@@ -5,12 +5,12 @@ basic cover : default
 [options]
 cover:
 mode cover
-depth 100
+depth 50
 
 --
 bmc:
 mode bmc
-depth 100
+depth 50
 --
 
 [engines]
