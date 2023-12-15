@@ -1,0 +1,26 @@
+[tasks]
+basic bmc
+basic cover : default
+
+[options]
+cover:
+mode cover
+depth 100
+
+--
+bmc:
+mode bmc
+depth 100
+--
+
+[engines]
+smtbmc boolector
+
+[script]
+
+read -sv  axi_mem.sv
+prep -top my_axi_mem
+
+[files]
+axi_mem.sv
+
