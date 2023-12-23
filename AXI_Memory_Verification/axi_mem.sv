@@ -93,17 +93,15 @@ module my_axi_mem
 
   int length1=0;
   int w_length=0;
-  int w_count=0;
-  int count=0;
   int z=0;
   int err=0;
   int s=0;
 
   reg [1:0] p_arstate,n_arstate;
   reg [1:0] p_rstate,n_rstate;
-  reg [1:0] p_awstate,n_awstate;
-  reg [1:0] p_wstate,n_wstate;
-  reg p_bstate,n_bstate;
+  reg [1:0] p_awstate=0,n_awstate;
+  reg [1:0] p_wstate=0,n_wstate;
+  reg p_bstate=0,n_bstate;
   
   
   
@@ -201,11 +199,17 @@ module my_axi_mem
     else begin
       p_arstate <= n_arstate;
       p_rstate <= n_rstate;
+      if(p_rstate <= R_START) begin
+	      length1 <= length1+1;
+      end
+      else if(p_rstate == R_IDLE) begin
+	      length1 <= 0;
+      end
     end
   end
   
   //fsm for read address channel
-  always@(*) begin	  
+  always@(p_arstate) begin	  
     case(p_arstate)
       
       AR_IDLE: begin             //wait for the completion of previous transaction
@@ -246,7 +250,7 @@ module my_axi_mem
 
   //fsm for read data channel
   
-  always@(*) begin
+  always@(p_rstate) begin
     
     case(p_rstate) 
       
@@ -258,8 +262,7 @@ module my_axi_mem
         if(p_arstate == AR_VALID) begin
 	  araddr_tn=araddr_t;	
           n_rstate <= R_START;
-          length1 = 0;
-          count = 0;
+   
 	  // z is the burst size
           if(arsize_t==0)
                   z=1;
@@ -281,8 +284,7 @@ module my_axi_mem
           
           read_data_incr(araddr_tn,arsize_t);
 	  araddr_tn <= araddr_t+((length1+1)*z); 
-	  //count <= length1;
-          length1 <= count+1;
+         // length1 <= length1+1;
 	  rvalid <= 1;
         end   
 	rid <= arid_t;
@@ -311,7 +313,6 @@ module my_axi_mem
         
         else begin
           n_rstate <= R_START;
-	  //count = length1;
           rlast <= 0;
         end
       end
@@ -338,6 +339,10 @@ module my_axi_mem
     end
 
 
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////// WRITE OPERATION ////////////////////////////////////////////////////////////////////////////
 
 
@@ -351,13 +356,20 @@ module my_axi_mem
       p_awstate <= n_awstate;
       p_wstate <= n_wstate;
       p_bstate <= n_bstate;
+      if(p_rstate <= R_START) begin
+             w_length <= w_length+1;
+      end
+      else if(p_rstate == R_IDLE) begin
+              w_length <= 0;
+      end
+
     end
   end
 
 
   // Write address channel FSM
 
-  always@(*) begin
+  always@(p_awstate) begin
     case(p_awstate)
 
       AW_IDLE: begin          
@@ -397,7 +409,7 @@ module my_axi_mem
 
   // Write data channel FSM
 
-  always@(*) begin
+  always@(p_wstate) begin
     
     case(p_wstate) 
       
@@ -425,9 +437,7 @@ module my_axi_mem
         //write  data to memory according to burst type
 	if(wvalid && awburst == 2'b01) begin  // this condition have to nested for multiple burst types
                 write_incr(awaddr_tn,awsize_t,wstrb);
-                awaddr_tn <= awaddr_t+((w_length+1)*s);
-	        //w_count <= w_length;	
-                w_length <= w_count+1; 
+                awaddr_tn <= awaddr_t+((w_length+1)*s);	 
 		if(awid_t != wid) begin
 			err <= 1;
 		end
@@ -468,7 +478,7 @@ module my_axi_mem
   // Write response channel FSM
   
 
-  always@(*) begin
+  always@(p_bstate) begin
     case(p_bstate)
       B_IDLE: begin
         bvalid <= 0;
@@ -568,7 +578,8 @@ module my_axi_mem
 	
 	///////////////////write transaction//////////////////////////////
 	//writing a data to memory location 22
-	
+
+///*	
 
 	sequence write_address_22;
 		(awvalid and awid==1 and awaddr==22 and awsize==2'b001 )[*3] ;
@@ -597,14 +608,14 @@ module my_axi_mem
         endsequence
 
         sequence read_data_15;
-                 mem[15]==8'h34 and mem[16]==8'hab ;
+                 mem[15]==8'h34 and mem[16]==8'hab and ##4 rvalid;
         endsequence
 
 	rd_c1: cover property(read_address_15 and read_data_15);
 
 
 
-
+//*/
 
 
 	//assertions
