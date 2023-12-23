@@ -14,7 +14,7 @@
    * Don't support interleaving transactions
    * Don't have cache and protection unit support
    * Only have incrementing address burst
-   (the code as of now not support transaction length more than one due to some tool limitations.Have to update in future)
+   
 4. List of properties to be covered
 5. Assumptions
 6. Assertions
