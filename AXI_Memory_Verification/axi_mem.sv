@@ -620,6 +620,300 @@ module my_axi_mem
 
 	//assertions
 	
+	///////////////////////// Read address channel checks ///////////////////////////////////
+	
+	property AXI_ERRM_ARID_STABLE;
+		arvalid and !arready |-> $stable(arid);
+	endproperty
+
+	property AXI_ERRM_ARID_X;
+		arvalid |-> not ($isunknown(arid));
+	endproperty
+
+	property AXI_ERRM_ARADDR_BOUNDARY;
+		arvalid |-> (araddr_t[ADDRESS_WIDTH-1:12] == araddr_tn[ADDRESS_WIDTH-1:12]);
+	endproperty
+
+	property AXI_ERRM_ARADDR_STABLE;
+		arvalid and !arready |-> $stable(araddr);
+	endproperty
+
+	property AXI_ERRM_ARADDR_X;
+		arvalid |-> not ($isunknown(araddr));
+	endproperty
+
+	property AXI_ERRM_ARLEN_STABLE;
+		arvalid and !arready |-> $stable(arlen);
+        endproperty
+
+	property AXI_ERRM_ARLEN_X;
+                arvalid |-> not ($isunknown(arlen));
+        endproperty
+
+	property AXI_ERRM_ARSIZE_STABLE;
+                arvalid and !arready |-> $stable(arsize);
+        endproperty
+
+        property AXI_ERRM_ARSIZE_X;
+                arvalid |-> not ($isunknown(arsize));
+        endproperty
+
+	property AXI_ERRM_ARSIZE;
+		arvalid |-> arsize <= 3'b010; // Here the data bus is 32bit(4B)
+	endproperty
+
+	property AXI_ERRM_ARBURST_STABLE;
+                arvalid and !arready |-> $stable(arburst);
+        endproperty
+
+        property AXI_ERRM_ARBURST_X;
+                arvalid |-> not ($isunknown(arburst));
+        endproperty
+
+        property AXI_ERRM_ARBURST;
+                arvalid |-> arburst != 2'b11; // 11 is the reserved burst type
+        endproperty
+
+	property AXI_ERRM_ARVALID_RESET;
+		$rose(arstn) |=> !arvalid[*1];
+	endproperty
+
+	property AXI_ERRM_ARVALID_STABLE;
+		$rose(arvalid) |-> arvalid until_with $rose(arready);
+	endproperty
+
+	property AXI_ERRM_ARVALID_X;
+		!($isunknown(arvalid));
+	endproperty
+
+	property AXI_ERRS_ARREADY_X;
+		!($isunknown(arready));
+        endproperty
+
+
+
+	//////////////////////// Read data channel checks ////////////////////////////////////////
+	
+	property AXI_ERRS_RID_STABLE;
+		rvalid and !rready |-> $stable(rid);
+        endproperty
+
+        property AXI_ERRS_RID_X;
+                rvalid |-> not ($isunknown(rid));
+        endproperty
+
+	property AXI_ERRS_RDATA_NUM;
+		$rose(rlast) |-> length1 == arlen_t+1;
+	endproperty
+
+	property AXI_ERRS_RDATA_STABLE;
+                rvalid and !rready |-> $stable(rdata);
+        endproperty
+
+        property AXI_ERRS_RDATA_X;
+                rvalid |-> not ($isunknown(rdata));
+        endproperty
+
+	property AXI_ERRS_RRESP_STABLE;
+                rvalid and !rready |-> $stable(rresp);
+        endproperty
+
+        property AXI_ERRS_RRESP_X;
+                rvalid |-> not ($isunknown(rresp));
+        endproperty
+
+	property AXI_ERRS_RLAST_STABLE;
+                rvalid and !rready |-> $stable(rlast);
+        endproperty
+
+        property AXI_ERRS_RLAST_X;
+                rvalid |-> not ($isunknown(rlast));
+        endproperty
+
+	property AXI_ERRS_RVALID_RESET;
+		$rose(arstn) |=> !rvalid[*1];
+	endproperty
+
+	property AXI_ERRS_RVALID_STABLE;
+		$rose(rvalid) |-> rvalid until_with $rose(rready);
+        endproperty
+
+	property AXI_ERRS_RVALID_X;
+		!($isunknown(rvalid));
+        endproperty
+
+	property AXI_ERRM_RREADY_X;
+                !($isunknown(rready));
+        endproperty
+
+
+	//////////////////////// Write address channel checks /////////////////////////////////////
+	
+	property AXI_ERRM_AWID_STABLE;
+		awvalid and !awready |-> $stable(awid);
+	endproperty
+
+	property AXI_ERRM_AWID_X;
+		awvalid |-> not($isunknown(awid));
+	endproperty
+
+	property AXI_ERRM_AWADDR_BOUNDARY;
+                awvalid |-> (awaddr_t[ADDRESS_WIDTH-1:12] == awaddr_tn[ADDRESS_WIDTH-1:12]);
+        endproperty
+
+	property AXI_ERRM_AWADDR_STABLE;
+                awvalid and !awready |-> $stable(awaddr);
+        endproperty
+
+        property AXI_ERRM_AWADDR_X;
+                awvalid |-> not($isunknown(awaddr));
+        endproperty
+
+	property AXI_ERRM_AWLEN_STABLE;
+                awvalid and !awready |-> $stable(awlen);
+        endproperty
+
+        property AXI_ERRM_AWLEN_X;
+                awvalid |-> not($isunknown(awlen));
+        endproperty
+
+	property AXI_ERRM_AWSIZE_STABLE;
+                awvalid and !awready |-> $stable(awsize);
+        endproperty
+
+        property AXI_ERRM_AWSIZE_X;
+                awvalid |-> not($isunknown(awsize));
+        endproperty
+
+	property AXI_ERRM_AWBURST;
+		awvalid |-> awburst != 2'b11;
+	endproperty
+
+	property AXI_ERRM_AWBURST_STABLE;
+                awvalid and !awready |-> $stable(awburst);
+        endproperty
+
+        property AXI_ERRM_AWBURST_X;
+                awvalid |-> not($isunknown(awburst));
+        endproperty
+
+	property AXI_ERRM_AWVALID_RESET;
+		$rose(arstn) |=> !awvalid[*1];
+	endproperty
+
+	property AXI_ERRM_AWVALID_STABLE;
+		$rose(awvalid) |-> awvalid until_with $rose(awready);
+	endproperty
+
+	property AXI_ERRM_AWVALID_X;
+                !($isunknown(awvalid));
+        endproperty
+
+        property AXI_ERRS_AWREADY_X;
+                !($isunknown(awready));
+        endproperty
+
+
+	///////////////////////// Write data channel checks ////////////////////////////////////
+	
+	property AXI_ERRM_WID_STABLE;
+                wvalid and !wready |-> $stable(wid);
+        endproperty
+
+        property AXI_ERRM_WID_X;
+                wvalid |-> not ($isunknown(wid));
+        endproperty
+
+	property AXI_ERRM_WDATA_NUM;
+		$rose(wlast) |-> w_length == awlen_t+1;
+	endproperty
+
+	property AXI_ERRM_WDATA_STABLE;
+                wvalid and !wready |-> $stable(wdata);
+        endproperty
+
+        property AXI_ERRM_WDATA_X;
+                wvalid |-> not ($isunknown(wdata));
+        endproperty
+
+	property AXI_ERRM_WSTRB;
+		wvalid |-> $countones(wstrb) == 2**awsize_t;
+	endproperty
+
+	property AXI_ERRM_WSTRB_STABLE;
+                wvalid and !wready |-> $stable(wstrb);
+        endproperty
+
+        property AXI_ERRM_WSTRB_X;
+                wvalid |-> not ($isunknown(wstrb));
+        endproperty
+
+	property AXI_ERRM_WLAST_STABLE;
+                wvalid and !wready |-> $stable(wlast);
+        endproperty
+
+        property AXI_ERRM_WLAST_X;
+                wvalid |-> not ($isunknown(wlast));
+        endproperty
+
+	property AXI_ERRM_WVALID_RESET;
+                $rose(arstn) |=> !wvalid[*1];
+        endproperty
+
+        property AXI_ERRM_WVALID_STABLE;
+                $rose(wvalid) |-> wvalid until_with $rose(wready);
+        endproperty
+
+        property AXI_ERRM_WVALID_X;
+                !($isunknown(wvalid));
+        endproperty
+
+        property AXI_ERRS_WREADY_X;
+                !($isunknown(wready));
+        endproperty
+
+
+
+	////////////////////////// Write response channel //////////////////////////////////////////////
+	
+	property AXI_ERRS_BID_STABLE;
+                bvalid and !bready |-> $stable(bid);
+        endproperty
+
+        property AXI_ERRS_BID_X;
+                bvalid |-> not ($isunknown(bid));
+        endproperty
+
+	property AXI_ERRS_BRESP;
+		bvalid |-> $past(wvalid) and $past(wready);
+	endproperty
+
+	property AXI_ERRS_BRESP_STABLE;
+                bvalid and !bready |-> $stable(bresp);
+        endproperty
+
+        property AXI_ERRS_BRESP_X;
+                bvalid |-> not ($isunknown(bresp));
+        endproperty
+
+	property AXI_ERRS_BVALID_RESET;
+                $rose(arstn) |=> !bvalid[*1];
+        endproperty
+
+        property AXI_ERRS_BVALID_STABLE;
+                $rose(bvalid) |-> bvalid until_with $rose(bready);
+        endproperty
+
+        property AXI_ERRS_BVALID_X;
+                !($isunknown(bvalid));
+        endproperty
+
+        property AXI_ERRM_BREADY_X;
+                !($isunknown(bready));
+        endproperty
+
+	
+
 
  `endif	 
           
