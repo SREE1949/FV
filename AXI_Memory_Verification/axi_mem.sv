@@ -97,8 +97,8 @@ module my_axi_mem
   int err=0;
   int s=0;
 
-  reg [1:0] p_arstate,n_arstate;
-  reg [1:0] p_rstate,n_rstate;
+  reg [1:0] p_arstate=0,n_arstate;
+  reg [1:0] p_rstate=0,n_rstate;
   reg [1:0] p_awstate=0,n_awstate;
   reg [1:0] p_wstate=0,n_wstate;
   reg p_bstate=0,n_bstate;
@@ -296,17 +296,17 @@ module my_axi_mem
 	else
 		rresp <= 2'b00;
         
-        if(!rready && length1 == arlen_t+1) begin
+        if(!rready && length1 == arlen_t) begin
           n_rstate <= R_WAIT;
           rlast <= 1;
         end
         
-        else if(!rready && length1 != arlen_t+1) begin
+        else if(!rready && length1 != arlen_t) begin
           n_rstate <= R_WAIT;
           rlast <= 0;
         end
         
-        else if(rready && length1 == arlen_t+1) begin
+        else if(rready && length1 == arlen_t) begin
           n_rstate <= R_IDLE;
           rlast <= 1;
         end
@@ -321,7 +321,7 @@ module my_axi_mem
        
       R_WAIT: begin
         if(rready) begin
-          if(length1 == arlen_t+1) begin
+          if(length1 == arlen_t) begin
             n_rstate <= R_IDLE; 
             rvalid <= 0;
           end
@@ -444,17 +444,17 @@ module my_axi_mem
 
         end
 
-	if(wvalid && w_length != awlen_t+1) begin
+	if(wvalid && w_length != awlen_t) begin
 		n_wstate <= W_START;
 
         end
-	else if(wvalid && w_length == awlen_t+1) begin
+	else if(wvalid && w_length == awlen_t) begin
 		n_wstate <= W_IDLE;
 		if(!wlast) begin
 			err <= 1;
 		end
         end
-	else if(!wvalid && w_length == awlen_t+1) begin
+	else if(!wvalid && w_length == awlen_t) begin
 		n_wstate <= W_WAIT;
 	end
 	else
@@ -519,111 +519,12 @@ module my_axi_mem
         default clocking @(posedge aclk); endclocking
         default disable iff(!arstn);
 
-	// Assumptions
-	burst_type_write:assume property(awburst == 2'b01);
-	burst_type_read:assume property(arburst == 2'b01);
-	strobes_and_size:assume property($countones(wstrb) == awsize_t+1);
-        P_awstate_range:assume property(p_awstate <3 and n_awstate < 3);
-        P_wstate_range:assume property(p_wstate <3 and n_wstate < 3);
-        P_bstate_range:assume property(p_bstate <2 and n_bstate < 2);
-        P_arstate_range:assume property(p_arstate <3 and n_arstate < 3);
-        P_rstate_range:assume property(p_rstate <3 and n_rstate < 3);
-      
-        aw_valid_stable:assume property($fell(awvalid) |-> $fell(awready));
-	w_valid_stable:assume property($fell(wvalid) |-> $fell(wready));
-	//b_valid_stable:assume property($fell(bvalid) |-> $fell(bready));
-	ar_valid_stable:assume property($fell(arvalid) |-> $fell(arready));
-	//r_valid_stable:assume property($fell(rvalid) |-> $fell(rready));
-
-        single_length_rtransactions:assume property(arlen == 0); //the tool not supporting the counting of transactions
-	single_length_wtransactions:assume property(awlen == 0); //the tool not supporting the counting of transactions
-
-
-        //cover the write response channel properties
-        resp_c1: cover property(bresp == 2'b00);                //okay
-        resp_c2: cover property(bresp == 2'b10);                //slave error
-	sequence wresp_handshake;
-		bvalid && bready;
-	endsequence
-
-	resp_c3: cover property(wresp_handshake);             //write response channel handshake
 	
-	//cover write address channel properties
-	sequence aw_handshake;
-                awvalid && awready;
-        endsequence
-	write_address_handshake_c1: cover property(aw_handshake);             //write address channel handshake
 
-
-	//cover write data channel properties
-	sequence w_handshake;
-                wvalid && wready;
-        endsequence
-	write_data_channel_c1: cover property(w_handshake);             //write data channel handshake
-	
-	//cover read address channel properties
-	sequence ar_handshake;
-                arvalid && arready;
-        endsequence
-	read_address_channel_c1: cover property(ar_handshake);             //read address channel handshake
-	
-	//cover read data channel properties
-	sequence r_handshake;
-                rvalid && rready;
-        endsequence
-	read_data_channel_c1: cover property(r_handshake);             //read data channel handshake
-
-
-
-	
-	///////////////////write transaction//////////////////////////////
-	//writing a data to memory location 22
-
-///*	
-
-	sequence write_address_22;
-		(awvalid and awid==1 and awaddr==22 and awsize==2'b001 )[*3] ;
-	endsequence
-        
-	sequence write_data_22_first;
-		wvalid and wdata==32'h00003048 and wid==1 and wstrb==4'b0011 and !wlast;
-	endsequence
-        
-	sequence write_data_22_last;
-                wvalid  and wdata==32'h00007092 and wid==1 and wstrb==4'b0011 and wlast;
-        endsequence
-
-	sequence write_data_22;
-		write_address_22 and  write_data_22_last[*2] ##2 bready ;
-	endsequence
-
-
-	wr_c1: cover property(write_data_22);
-
-
-	///////////////// read transaction ////////////////////////////
-
-	sequence read_address_15;
-                (arvalid and rid==1 and araddr==15 and arsize==2'b001 and !rvalid)[*3] ;
-        endsequence
-
-        sequence read_data_15;
-                 mem[15]==8'h34 and mem[16]==8'hab and ##4 rvalid;
-        endsequence
-
-	rd_c1: cover property(read_address_15 and read_data_15);
-
-
-
-//*/
-
-
-	//assertions
-	
 	///////////////////////// Read address channel checks ///////////////////////////////////
 	
 	property AXI_ERRM_ARID_STABLE;
-		arvalid and !arready |-> $stable(arid);
+		arvalid and !arready |=> $stable(arid);
 	endproperty
 
 	property AXI_ERRM_ARID_X;
@@ -635,7 +536,7 @@ module my_axi_mem
 	endproperty
 
 	property AXI_ERRM_ARADDR_STABLE;
-		arvalid and !arready |-> $stable(araddr);
+		arvalid and !arready |=> $stable(araddr);
 	endproperty
 
 	property AXI_ERRM_ARADDR_X;
@@ -643,7 +544,7 @@ module my_axi_mem
 	endproperty
 
 	property AXI_ERRM_ARLEN_STABLE;
-		arvalid and !arready |-> $stable(arlen);
+		arvalid and !arready |=> $stable(arlen);
         endproperty
 
 	property AXI_ERRM_ARLEN_X;
@@ -651,7 +552,7 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRM_ARSIZE_STABLE;
-                arvalid and !arready |-> $stable(arsize);
+                arvalid and !arready |=> $stable(arsize);
         endproperty
 
         property AXI_ERRM_ARSIZE_X;
@@ -663,7 +564,7 @@ module my_axi_mem
 	endproperty
 
 	property AXI_ERRM_ARBURST_STABLE;
-                arvalid and !arready |-> $stable(arburst);
+                arvalid and !arready |=> $stable(arburst);
         endproperty
 
         property AXI_ERRM_ARBURST_X;
@@ -695,7 +596,7 @@ module my_axi_mem
 	//////////////////////// Read data channel checks ////////////////////////////////////////
 	
 	property AXI_ERRS_RID_STABLE;
-		rvalid and !rready |-> $stable(rid);
+		rvalid and !rready |=> $stable(rid);
         endproperty
 
         property AXI_ERRS_RID_X;
@@ -703,11 +604,11 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRS_RDATA_NUM;
-		$rose(rlast) |-> length1 == arlen_t+1;
+		$rose(rlast) |-> length1 == arlen_t;
 	endproperty
 
 	property AXI_ERRS_RDATA_STABLE;
-                rvalid and !rready |-> $stable(rdata);
+                rvalid and !rready |=> $stable(rdata);
         endproperty
 
         property AXI_ERRS_RDATA_X;
@@ -715,7 +616,7 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRS_RRESP_STABLE;
-                rvalid and !rready |-> $stable(rresp);
+                rvalid and !rready |=> $stable(rresp);
         endproperty
 
         property AXI_ERRS_RRESP_X;
@@ -723,7 +624,7 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRS_RLAST_STABLE;
-                rvalid and !rready |-> $stable(rlast);
+                rvalid and !rready |=> $stable(rlast);
         endproperty
 
         property AXI_ERRS_RLAST_X;
@@ -750,7 +651,7 @@ module my_axi_mem
 	//////////////////////// Write address channel checks /////////////////////////////////////
 	
 	property AXI_ERRM_AWID_STABLE;
-		awvalid and !awready |-> $stable(awid);
+		awvalid and !awready |=> $stable(awid);
 	endproperty
 
 	property AXI_ERRM_AWID_X;
@@ -762,7 +663,7 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRM_AWADDR_STABLE;
-                awvalid and !awready |-> $stable(awaddr);
+                awvalid and !awready |=> $stable(awaddr);
         endproperty
 
         property AXI_ERRM_AWADDR_X;
@@ -770,15 +671,19 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRM_AWLEN_STABLE;
-                awvalid and !awready |-> $stable(awlen);
+                awvalid and !awready |=> $stable(awlen);
         endproperty
 
         property AXI_ERRM_AWLEN_X;
                 awvalid |-> not($isunknown(awlen));
         endproperty
 
+	property AXI_ERRM_AWSIZE;
+                awvalid |-> awsize <= 3'b010; // Here the data bus is 32bit(4B)
+        endproperty
+
 	property AXI_ERRM_AWSIZE_STABLE;
-                awvalid and !awready |-> $stable(awsize);
+                awvalid and !awready |=> $stable(awsize);
         endproperty
 
         property AXI_ERRM_AWSIZE_X;
@@ -790,7 +695,7 @@ module my_axi_mem
 	endproperty
 
 	property AXI_ERRM_AWBURST_STABLE;
-                awvalid and !awready |-> $stable(awburst);
+                awvalid and !awready |=> $stable(awburst);
         endproperty
 
         property AXI_ERRM_AWBURST_X;
@@ -817,7 +722,7 @@ module my_axi_mem
 	///////////////////////// Write data channel checks ////////////////////////////////////
 	
 	property AXI_ERRM_WID_STABLE;
-                wvalid and !wready |-> $stable(wid);
+                wvalid and !wready |=> $stable(wid);
         endproperty
 
         property AXI_ERRM_WID_X;
@@ -825,11 +730,11 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRM_WDATA_NUM;
-		$rose(wlast) |-> w_length == awlen_t+1;
+		$rose(wlast) |-> w_length == awlen_t;
 	endproperty
 
 	property AXI_ERRM_WDATA_STABLE;
-                wvalid and !wready |-> $stable(wdata);
+                wvalid and !wready |=> $stable(wdata);
         endproperty
 
         property AXI_ERRM_WDATA_X;
@@ -841,7 +746,7 @@ module my_axi_mem
 	endproperty
 
 	property AXI_ERRM_WSTRB_STABLE;
-                wvalid and !wready |-> $stable(wstrb);
+                wvalid and !wready |=> $stable(wstrb);
         endproperty
 
         property AXI_ERRM_WSTRB_X;
@@ -849,7 +754,7 @@ module my_axi_mem
         endproperty
 
 	property AXI_ERRM_WLAST_STABLE;
-                wvalid and !wready |-> $stable(wlast);
+                wvalid and !wready |=> $stable(wlast);
         endproperty
 
         property AXI_ERRM_WLAST_X;
@@ -877,7 +782,7 @@ module my_axi_mem
 	////////////////////////// Write response channel //////////////////////////////////////////////
 	
 	property AXI_ERRS_BID_STABLE;
-                bvalid and !bready |-> $stable(bid);
+                bvalid and !bready |=> $stable(bid);
         endproperty
 
         property AXI_ERRS_BID_X;
@@ -889,7 +794,7 @@ module my_axi_mem
 	endproperty
 
 	property AXI_ERRS_BRESP_STABLE;
-                bvalid and !bready |-> $stable(bresp);
+                bvalid and !bready |=> $stable(bresp);
         endproperty
 
         property AXI_ERRS_BRESP_X;
@@ -912,13 +817,206 @@ module my_axi_mem
                 !($isunknown(bready));
         endproperty
 
+
+
+
+
+	 //////////////////**************** Assumptions ****************//////////////////////
+
+
+        //    read address channel(behavior of master)
+	assm_ar_1:assume property(AXI_ERRM_ARID_STABLE);
+	assm_ar_2:assume property(AXI_ERRM_ARID_X);
+	assm_ar_3:assume property(AXI_ERRM_ARADDR_BOUNDARY);
+	assm_ar_4:assume property(AXI_ERRM_ARADDR_STABLE);
+	assm_ar_5:assume property(AXI_ERRM_ARADDR_X);
+	assm_ar_6:assume property(AXI_ERRM_ARLEN_STABLE);
+        assm_ar_7:assume property(AXI_ERRM_ARLEN_X);
+	assm_ar_8:assume property(AXI_ERRM_ARSIZE);
+	assm_ar_9:assume property(AXI_ERRM_ARSIZE_STABLE);
+        assm_ar_10:assume property(AXI_ERRM_ARSIZE_X);
+	assm_ar_11:assume property(AXI_ERRM_ARBURST);
+	assm_ar_12:assume property(AXI_ERRM_ARBURST_STABLE);
+        assm_ar_13:assume property(AXI_ERRM_ARBURST_X);
+	assm_ar_14:assume property(AXI_ERRM_ARVALID_RESET);
+	assm_ar_15:assume property(AXI_ERRM_ARVALID_STABLE);
+	assm_ar_16:assume property(AXI_ERRM_ARVALID_X);
+
+	//    read data channel
+	assm_r_1:assume property(AXI_ERRM_RREADY_X);
+
+	//    write address channel
+	assm_aw_1:assume property(AXI_ERRM_AWID_STABLE);
+        assm_aw_2:assume property(AXI_ERRM_AWID_X);
+        assm_aw_3:assume property(AXI_ERRM_AWADDR_BOUNDARY);
+        assm_aw_4:assume property(AXI_ERRM_AWADDR_STABLE);
+        assm_aw_5:assume property(AXI_ERRM_AWADDR_X);
+        assm_aw_6:assume property(AXI_ERRM_AWLEN_STABLE);
+        assm_aw_7:assume property(AXI_ERRM_AWLEN_X);
+        assm_aw_8:assume property(AXI_ERRM_AWSIZE);
+        assm_aw_9:assume property(AXI_ERRM_AWSIZE_STABLE);
+        assm_aw_10:assume property(AXI_ERRM_AWSIZE_X);
+        assm_aw_11:assume property(AXI_ERRM_AWBURST);
+        assm_aw_12:assume property(AXI_ERRM_AWBURST_STABLE);
+        assm_aw_13:assume property(AXI_ERRM_AWBURST_X);
+        assm_aw_14:assume property(AXI_ERRM_AWVALID_RESET);
+        assm_aw_15:assume property(AXI_ERRM_AWVALID_STABLE);
+        assm_aw_16:assume property(AXI_ERRM_AWVALID_X);
+
+	//    write data channel
+	assm_w_1:assume property(AXI_ERRM_WID_STABLE);
+	assm_w_2:assume property(AXI_ERRM_WID_X);
+	assm_w_3:assume property(AXI_ERRM_WDATA_NUM);
+	assm_w_4:assume property(AXI_ERRM_WDATA_STABLE);
+        assm_w_5:assume property(AXI_ERRM_WDATA_X);
+	assm_w_6:assume property(AXI_ERRM_WSTRB);
+	assm_w_7:assume property(AXI_ERRM_WSTRB_STABLE);
+        assm_w_8:assume property(AXI_ERRM_WSTRB_X);
+	assm_w_9:assume property(AXI_ERRM_WLAST_STABLE);
+        assm_w_10:assume property(AXI_ERRM_WLAST_X);
+	assm_w_11:assume property(AXI_ERRM_WVALID_RESET);
+	assm_w_12:assume property(AXI_ERRM_WVALID_STABLE);
+	assm_w_13:assume property(AXI_ERRM_WVALID_X);
+
+	//     Write response channel
+	assm_b_1:assume property(AXI_ERRM_BREADY_X);
+
+        burst_type_write:assume property(awburst == 2'b01);
+        burst_type_read:assume property(arburst == 2'b01);
+        strobes_and_size:assume property($countones(wstrb) == awsize_t+1);
+        P_awstate_range:assume property(p_awstate <3 and n_awstate < 3);
+        P_wstate_range:assume property(p_wstate <3 and n_wstate < 3);
+        P_arstate_range:assume property(p_arstate <3 and n_arstate < 3);
+        P_rstate_range:assume property(p_rstate <3 and n_rstate < 3);
+
+        aw_valid_stable:assume property($fell(awvalid) |-> $fell(awready));
+        w_valid_stable:assume property($fell(wvalid) |-> $fell(wready));
+        //b_valid_stable:assume property($fell(bvalid) |-> $fell(bready));
+        ar_valid_stable:assume property($fell(arvalid) |-> $fell(arready));
+        //r_valid_stable:assume property($fell(rvalid) |-> $fell(rready));
+
+        single_length_rtransactions:assume property(arlen == 0); //the tool not supporting the counting of transactions
+        single_length_wtransactions:assume property(awlen == 0); //the tool not supporting the counting of transactions
+
+
+
+	//////////////////**************** Cover  ****************//////////////////////
+
+	//cover the write response channel properties
+
+	resp_c1: cover property(bresp == 2'b00);                //okay
+        resp_c2: cover property(bresp == 2'b10);                //slave error
+        sequence wresp_handshake;
+                bvalid && bready;
+        endsequence
+
+        resp_c3: cover property(wresp_handshake);             //write response channel handshake
+
+        //cover write address channel properties
+        sequence aw_handshake;
+                awvalid && awready;
+        endsequence
+        write_address_handshake_c1: cover property(aw_handshake);             //write address channel handshake
+
+
+        //cover write data channel properties
+        sequence w_handshake;
+                wvalid && wready;
+        endsequence
+        write_data_channel_c1: cover property(w_handshake);             //write data channel handshake
+
+        //cover read address channel properties
+        sequence ar_handshake;
+                arvalid && arready;
+        endsequence
+        read_address_channel_c1: cover property(ar_handshake);             //read address channel handshake
+
+        //cover read data channel properties
+        sequence r_handshake;
+                rvalid && rready;
+        endsequence
+        read_data_channel_c1: cover property(r_handshake);             //read data channel handshake
 	
+
+	///////////////////write transaction//////////////////////////////
+        //writing a data to memory location 22
+
+/*
+
+        sequence write_address_22;
+                (awvalid and awid==1 and awaddr==22 and awsize==2'b001 )[*3] ;
+        endsequence
+
+        sequence write_data_22_first;
+                wvalid and wdata==32'h00003048 and wid==1 and wstrb==4'b0011 and !wlast;
+        endsequence
+
+        sequence write_data_22_last;
+                wvalid  and wdata==32'h00007092 and wid==1 and wstrb==4'b0011 and wlast;
+        endsequence
+
+        sequence write_data_22;
+                write_address_22 and  write_data_22_last[*2] ##2 bready ;
+        endsequence
+
+
+        wr_c1: cover property(write_data_22);
+
+
+        ///////////////// read transaction ////////////////////////////
+
+        sequence read_address_15;
+                (arvalid and rid==1 and araddr==15 and arsize==2'b001 and !rvalid)[*3] ;
+        endsequence
+
+        sequence read_data_15;
+                 mem[15]==8'h34 and mem[16]==8'hab and ##4 rvalid;
+        endsequence
+
+        rd_c1: assert property(read_address_15 and read_data_15);
+
+        */
+
+
+
+        //////////////////**************** Assertions ****************//////////////////////
+	
+	//     Read address channel
+	asrt_ar_1:assert property(AXI_ERRS_ARREADY_X);
+
+	//     Read data channel
+	asrt_r_1:assert property(AXI_ERRS_RID_STABLE);
+	asrt_r_2:assert property(AXI_ERRS_RID_X);
+	asrt_r_3:assert property(AXI_ERRS_RDATA_STABLE);
+        asrt_r_4:assert property(AXI_ERRS_RDATA_X);
+	asrt_r_5:assert property(AXI_ERRS_RDATA_NUM);
+	asrt_r_6:assert property(AXI_ERRS_RRESP_STABLE);
+        asrt_r_7:assert property(AXI_ERRS_RRESP_X);
+	asrt_r_8:assert property(AXI_ERRS_RLAST_STABLE);
+        asrt_r_9:assert property(AXI_ERRS_RLAST_X);
+	asrt_r_10:assert property(AXI_ERRS_RVALID_STABLE);
+        asrt_r_11:assert property(AXI_ERRS_RVALID_X);
+	asrt_r_12:assert property(AXI_ERRS_RVALID_RESET);
+
+	//     Write address channel
+	asrt_aw_1:assert property(AXI_ERRS_AWREADY_X);
+
+	//     Write data channel
+        asrt_w_1:assert property(AXI_ERRS_WREADY_X);
+
+	//     Write response channel
+        asrt_b_1:assume property(AXI_ERRS_BID_STABLE);
+        asrt_b_2:assume property(AXI_ERRS_BID_X);
+        asrt_b_3:assume property(AXI_ERRS_BRESP);
+        asrt_b_4:assume property(AXI_ERRS_BRESP_STABLE);
+        asrt_b_5:assume property(AXI_ERRS_BRESP_X);
+        asrt_b_6:assume property(AXI_ERRS_BVALID_RESET);
+        asrt_b_7:assume property(AXI_ERRS_BVALID_STABLE);
+        asrt_b_8:assume property(AXI_ERRS_BVALID_X);
+	
+
 
 
  `endif	 
           
-        
-      
-        
-
 endmodule
