@@ -15,7 +15,9 @@
    * Don't have cache and protection unit support
    * Only have incrementing address burst
    
-4. List of properties to be covered
-5. Assumptions
-6. Assertions
-7. Running and debugging
+4. List of properties to be covered<br>
+   Added the basic properties to be covered as per the protocol specification.
+5. Assumptions and Assertions<br>
+   Assumptions and assertions are included as per the user [guide for the AMBA AXI3](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwin4KmyqbeDAxVFwjgGHX8yAx8QFnoECBQQAQ&url=https%3A%2F%2Fdocumentation-service.arm.com%2Fstatic%2F5fa14378b1a7c5445f290251%3Ftoken%3D&usg=AOvVaw2_zmlHYZiD0r3Q-aTAe6IX&opi=89978449) protocol.The prperties of master can be included as assumptions and the properties of slave can be included as assertions. Also other properties which is specific to our design also added.
+6. Running and debugging<br>
+   It is better to run step by step to debug easly.
